@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Datos sin anonimizar y archivos grandes
+data/raw/
+*.csv
+*.pkl
+*.h5
+
+# Configuración de IDE
+.vscode/
+.idea/
