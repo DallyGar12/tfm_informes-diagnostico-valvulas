@@ -2,261 +2,125 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrador - Diagnóstico de Válvulas</title>
+    <title>Admin - Diagnóstico de Válvulas</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #0f1117;
-            color: #f1f5f9;
-            padding: 24px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { margin-bottom: 24px; color: #22d3ee; }
-        h2 { margin-bottom: 16px; font-size: 18px; color: #f1f5f9; }
-        .card {
-            background: #161b27;
-            border: 1px solid #2a3145;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-        button {
-            background: #22d3ee;
-            color: #0f1117;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-right: 12px;
-            transition: all 0.2s;
-        }
-        button:hover { background: #06b6d4; transform: translateY(-1px); }
-        button.danger { background: #c2410c; color: white; }
-        button.danger:hover { background: #ea580c; }
-        button.secondary { background: #334155; color: white; }
-        .status {
-            margin-top: 16px;
-            padding: 12px;
-            border-radius: 8px;
-        }
-        .status.success { background: rgba(22,163,74,0.2); border: 1px solid #16a34a; color: #4ade80; }
-        .status.error { background: rgba(194,65,12,0.2); border: 1px solid #c2410c; color: #fb923c; }
-        .status.info { background: rgba(34,211,238,0.1); border: 1px solid #22d3ee; color: #22d3ee; }
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
-        }
-        .metric {
-            background: #1e2535;
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-        }
-        .metric-value { font-size: 32px; font-weight: 700; color: #22d3ee; }
-        .metric-label { font-size: 12px; color: #8b9bba; margin-top: 4px; }
-        input[type="file"] {
-            margin: 16px 0;
-            display: block;
-            padding: 10px;
-            background: #1e2535;
-            border: 1px solid #2a3145;
-            border-radius: 8px;
-            color: #f1f5f9;
-            width: 100%;
-        }
-        .info-text {
-            background: #1e2535;
-            padding: 16px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 12px;
-            margin-top: 16px;
-            overflow-x: auto;
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #22d3ee;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .flex { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        hr { border-color: #2a3145; margin: 16px 0; }
+        body { font-family: system-ui; background: #0a0c10; color: #f1f5f9; padding: 40px; }
+        .card { background: #141824; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #2a3145; }
+        button { background: #22d3ee; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        button.danger { background: #ef4444; }
+        button.secondary { background: #2a3145; color: white; }
+        pre { background: #1a2030; padding: 16px; border-radius: 8px; overflow-x: auto; margin-top: 16px; }
+        input[type="file"] { background: #1a2030; border: 1px solid #2a3145; padding: 10px; border-radius: 8px; color: white; margin-right: 10px; }
+        .metric { display: inline-block; background: #1a2030; padding: 8px 16px; border-radius: 8px; margin-right: 12px; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #22d3ee; }
+        .metric-label { font-size: 11px; color: #8b9bba; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔧 Panel de Administrador - Diagnóstico de Válvulas</h1>
-        
-        <!-- Estado del Modelo -->
-        <div class="card">
-            <h2>📊 Estado del Sistema</h2>
-            <div id="model-status" class="status info">Cargando...</div>
-            <div class="metrics" id="metrics"></div>
-        </div>
-        
-        <!-- Gestión de Datos -->
-        <div class="card">
-            <h2>📂 Gestión de Datos</h2>
-            <p style="margin-bottom: 12px; color: #8b9bba;">Sube un nuevo archivo CSV para reentrenar el modelo. El modelo se entrenará automáticamente con los nuevos datos.</p>
-            <input type="file" id="csvFile" accept=".csv">
-            <div class="flex">
-                <button onclick="cargarDatos()">📤 Cargar y Reentrenar Modelo</button>
-                <button onclick="exportarInforme()" class="secondary">📥 Exportar Informe Completo</button>
-            </div>
-            <div id="upload-status"></div>
-        </div>
-        
-        <!-- Información del Modelo -->
-        <div class="card">
-            <h2>🧠 Información del Modelo</h2>
-            <div class="info-text" id="model-info">
-                <div class="loading"></div> Cargando información...
-            </div>
-        </div>
-        
-        <!-- Guía de Columnas Requeridas -->
-        <div class="card">
-            <h2>📋 Formato Requerido del CSV</h2>
-            <div class="info-text">
-                <strong>Separador:</strong> Punto y coma (;)<br>
-                <strong>Codificación:</strong> UTF-8<br>
-                <strong>Columnas requeridas (nombres exactos):</strong><br><br>
-                <code>
-                TAG CUERPO;<br>
-                FRICCION RECOMENDADA; FRICCION MEDIDA;<br>
-                TORQUE - CARGA EN EL ASIENTO RECOMENDADA; TORQUE - CARGA EN EL ASIENTO MEDIDA;<br>
-                BANDA DE ERROR DINAMICA RECOMENDADA; BANDA DE ERROR DINAMICA MEDIDA;<br>
-                LINEALIDAD DINAMICA RECOMENDADA; LINEALIDAD DINAMICA MEDIDA
-                </code>
-            </div>
-        </div>
+    <h1>🔧 Panel de Administración</h1>
+    <p>Sistema de Diagnóstico de Válvulas con XGBoost</p>
+    
+    <div class="card">
+        <h2>📊 Estado del Sistema</h2>
+        <button onclick="checkStatus()">Actualizar Estado</button>
+        <pre id="status"></pre>
     </div>
     
+    <div class="card">
+        <h2>📁 Cargar Dataset</h2>
+        <input type="file" id="fileInput" accept=".csv">
+        <button onclick="uploadDataset()">Subir CSV</button>
+        <div id="uploadResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>🤖 Entrenar Modelo</h2>
+        <button onclick="trainModel()">Entrenar XGBoost</button>
+        <div id="trainResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>📥 Exportar</h2>
+        <button onclick="exportData()">Exportar Informe CSV</button>
+    </div>
+    
+    <div class="card">
+        <h2>⚡ Diagnóstico Rápido</h2>
+        <input type="number" id="valveId" placeholder="ID Válvula (0-198)">
+        <button onclick="quickDiagnostic()">Diagnosticar</button>
+        <div id="diagnosticResult"></div>
+    </div>
+
     <script>
-        const API_URL = "http://localhost:5000/api/admin";
+        const API = "http://localhost:5000/api";
         
-        // ============================================================
-        // CARGAR ESTADO DEL SISTEMA
-        // ============================================================
-        
-        async function cargarEstado() {
+        async function checkStatus() {
             try {
-                const response = await fetch(`${API_URL}/status`);
-                const data = await response.json();
-                
-                const statusDiv = document.getElementById('model-status');
-                if (data.modelo_entrenado) {
-                    statusDiv.innerHTML = '<div class="status success">✅ Modelo cargado y listo para uso</div>';
-                } else if (data.datos_cargados) {
-                    statusDiv.innerHTML = '<div class="status warning">⚠️ Datos cargados pero modelo no entrenado. Haz clic en "Reentrenar Modelo"</div>';
-                } else {
-                    statusDiv.innerHTML = '<div class="status error">❌ No hay datos cargados. Sube un archivo CSV.</div>';
-                }
-                
-                // Mostrar métricas
-                const resumenResponse = await fetch("http://localhost:5000/api/resumen");
-                const resumen = await resumenResponse.json();
-                
-                document.getElementById('metrics').innerHTML = `
-                    <div class="metric"><div class="metric-value">${resumen.total || 0}</div><div class="metric-label">Total Válvulas</div></div>
-                    <div class="metric"><div class="metric-value" style="color: #4ade80;">${resumen.aceptable || 0}</div><div class="metric-label">🟢 ACEPTABLE</div></div>
-                    <div class="metric"><div class="metric-value" style="color: #facc15;">${resumen.aceptable_com || 0}</div><div class="metric-label">🟡 ACEPTABLE CON COMENTARIOS</div></div>
-                    <div class="metric"><div class="metric-value" style="color: #fb923c;">${resumen.alerta || 0}</div><div class="metric-label">🔴 ALERTA</div></div>
-                `;
-                
-                // Información del modelo
-                document.getElementById('model-info').innerHTML = `
-                    📁 <strong>Tipo de modelo:</strong> XGBoost (Extreme Gradient Boosting)<br>
-                    📊 <strong>Características (features):</strong> 8 (Fricción, Carga, Banda Muerta, Linealidad - recomendadas y medidas)<br>
-                    🎯 <strong>Clases de salida:</strong> ACEPTABLE, ACEPTABLE CON COMENTARIOS, ALERTA<br>
-                    💾 <strong>Modelo guardado en:</strong> archivo .pkl<br>
-                    🔄 <strong>Reentrenamiento:</strong> Cada vez que cargas un nuevo CSV, el modelo se reentrena automáticamente<br>
-                    📈 <strong>Precisión en entrenamiento:</strong> ~94% (con dataset actual)
-                `;
-                
-            } catch (error) {
-                console.error("Error cargando estado:", error);
-                document.getElementById('model-status').innerHTML = '<div class="status error">❌ Error conectando con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:5000</div>';
+                const res = await fetch(`${API}/admin/status`);
+                const data = await res.json();
+                document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('status').textContent = 'Error: ' + e.message;
             }
         }
         
-        // ============================================================
-        // CARGAR DATOS Y REENTRENAR
-        // ============================================================
-        
-        async function cargarDatos() {
-            const fileInput = document.getElementById('csvFile');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('Selecciona un archivo CSV primero');
-                return;
-            }
-            
-            const statusDiv = document.getElementById('upload-status');
-            statusDiv.innerHTML = '<div class="status info"><div class="loading"></div> Cargando datos y reentrenando modelo...</div>';
-            
+        async function uploadDataset() {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) { alert('Selecciona un archivo CSV'); return; }
             const formData = new FormData();
             formData.append('file', file);
-            
+            document.getElementById('uploadResult').innerHTML = '<span style="color:#22d3ee;">Subiendo...</span>';
             try {
-                // Cargar datos
-                const uploadResponse = await fetch(`${API_URL}/datos`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const uploadResult = await uploadResponse.json();
-                
-                if (!uploadResult.success) {
-                    statusDiv.innerHTML = `<div class="status error">❌ Error al cargar datos: ${uploadResult.error}</div>`;
-                    return;
-                }
-                
-                // Reentrenar modelo
-                statusDiv.innerHTML = '<div class="status info"><div class="loading"></div> Entrenando modelo con los nuevos datos...</div>';
-                
-                const trainResponse = await fetch(`${API_URL}/entrenar`, {
-                    method: 'POST'
-                });
-                const trainResult = await trainResponse.json();
-                
-                if (trainResult.success) {
-                    statusDiv.innerHTML = `<div class="status success">✅ ${trainResult.message}<br>📊 Precisión del modelo: ${(trainResult.accuracy * 100).toFixed(2)}%</div>`;
-                    cargarEstado(); // Actualizar estado
+                const res = await fetch(`${API}/admin/cargar_dataset`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('uploadResult').innerHTML = `<span style="color:#10b981;">✅ ${data.message}</span>`;
                 } else {
-                    statusDiv.innerHTML = `<div class="status error">❌ Error al entrenar: ${trainResult.error}</div>`;
+                    document.getElementById('uploadResult').innerHTML = `<span style="color:#ef4444;">❌ ${data.error}</span>`;
                 }
-                
-            } catch (error) {
-                statusDiv.innerHTML = `<div class="status error">❌ Error de conexión: ${error.message}</div>`;
+            } catch (e) {
+                document.getElementById('uploadResult').innerHTML = `<span style="color:#ef4444;">❌ ${e.message}</span>`;
             }
         }
         
-        // ============================================================
-        // EXPORTAR INFORME
-        // ============================================================
-        
-        async function exportarInforme() {
-            window.open(`${API_URL}/exportar`, '_blank');
+        async function trainModel() {
+            document.getElementById('trainResult').innerHTML = '<span style="color:#22d3ee;">Entrenando...</span>';
+            try {
+                const res = await fetch(`${API}/admin/entrenar`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('trainResult').innerHTML = `<span style="color:#10b981;">✅ ${data.message}<br>Accuracy: ${(data.accuracy * 100).toFixed(2)}%</span>`;
+                } else {
+                    document.getElementById('trainResult').innerHTML = `<span style="color:#ef4444;">❌ ${data.error}</span>`;
+                }
+            } catch (e) {
+                document.getElementById('trainResult').innerHTML = `<span style="color:#ef4444;">❌ ${e.message}</span>`;
+            }
         }
         
-        // ============================================================
-        // ACTUALIZAR CADA 30 SEGUNDOS
-        // ============================================================
+        async function exportData() {
+            window.open(`${API}/admin/exportar`, '_blank');
+        }
         
-        cargarEstado();
-        setInterval(cargarEstado, 30000);
+        async function quickDiagnostic() {
+            const id = document.getElementById('valveId').value;
+            if (!id) { alert('Ingrese un ID'); return; }
+            try {
+                const res = await fetch(`${API}/valvulas/${id}`);
+                const data = await res.json();
+                document.getElementById('diagnosticResult').innerHTML = `
+                    <div style="background:#1a2030;padding:16px;border-radius:8px;margin-top:12px;">
+                        <strong>${data.name}</strong><br>
+                        Estado: ${data.status}<br>
+                        Recomendación: ${data.recommendation || 'Sin recomendación'}
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('diagnosticResult').innerHTML = `<span style="color:#ef4444;">Error: ${e.message}</span>`;
+            }
+        }
+        
+        checkStatus();
     </script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema de Diagnóstico de Válvulas - ML</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnóstico de Válvulas - XGBoost</title>
+  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -13,15 +13,14 @@
   <div class="header-inner">
     <div class="header-logo">
       <div class="logo-icon">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
       </div>
       <div>
         <div class="header-title">Sistema de Diagnóstico de Válvulas</div>
-        <div class="header-subtitle">Análisis mediante Machine Learning XGBoost</div>
+        <div class="header-subtitle">Machine Learning XGBoost</div>
       </div>
     </div>
     <div class="header-stats" id="header-stats">Cargando...</div>
@@ -32,309 +31,267 @@
   <div class="grid-layout">
     <aside>
       <div class="card">
-        <div class="valve-list-header">
-          <div class="card-title">Válvulas Analizadas</div>
-          <div class="card-subtitle" id="valve-count-sub"></div>
-          <div class="severity-badges" id="list-badges"></div>
-        </div>
+        <div class="card-title">Válvulas Analizadas</div>
+        <div class="card-subtitle" id="valve-count"></div>
         <div class="valve-scroll">
-          <div class="valve-items" id="valve-items">Cargando válvulas...</div>
+          <div class="valve-items" id="valve-list">
+            <div class="loading">Cargando válvulas...</div>
+          </div>
         </div>
       </div>
     </aside>
 
     <section>
       <div class="card">
-        <div id="empty-state" style="text-align: center; padding: 60px; color: #8b9bba;">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="margin-bottom: 16px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-          <p>Seleccione una válvula</p>
-          <p>para ver el análisis gráfico de sus variables</p>
+        <div id="empty-state" class="empty-state">
+          <p>🔧 Seleccione una válvula</p>
+          <p>para ver el análisis detallado</p>
         </div>
-        <div id="valve-detail" style="display:none;">
-          <div style="padding: 20px 24px 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div id="detail-view" style="display:none;">
+          <div style="padding: 20px 24px">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <div>
                 <div style="font-size: 24px; font-weight: 700;" id="detail-name"></div>
-                <div style="font-size: 13px; color: #8b9bba; margin-top: 2px;" id="detail-status"></div>
+                <div style="font-size: 13px; color: #8b9bba;" id="detail-status"></div>
               </div>
-              <div id="detail-severity-badge"></div>
+              <div id="detail-badge"></div>
             </div>
-            <div style="background: rgba(30,37,53,0.5); border: 1px solid #2a3145; border-radius: 6px; padding: 12px; margin-top: 10px;">
-              <div style="font-weight: 600; margin-bottom: 4px;">Recomendación Principal:</div>
-              <div style="color: #8b9bba;" id="detail-recommendation"></div>
+            <div style="background: rgba(30,37,53,0.5); border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+              <div style="font-weight: 600; margin-bottom: 4px;">📋 Recomendación</div>
+              <div id="detail-recommendation" style="color: #8b9bba;"></div>
             </div>
-            <div style="background: rgba(8,145,178,0.15); border: 1px solid rgba(8,145,178,0.3); border-radius: 6px; padding: 12px; margin-top: 8px;">
-              <div style="font-weight: 600; margin-bottom: 4px; color: #22d3ee;">Plan de Acción:</div>
-              <div style="color: rgba(34,211,238,0.8);" id="detail-action"></div>
+            <div style="background: rgba(34,211,238,0.15); border-radius: 6px; padding: 12px; margin-bottom: 20px;">
+              <div style="font-weight: 600; margin-bottom: 4px; color: #22d3ee;">📌 Plan de Acción</div>
+              <div id="detail-action" style="color: rgba(34,211,238,0.8);"></div>
             </div>
-          </div>
-          <div style="padding: 0 24px 24px;">
-            <div style="height: 360px; margin-bottom: 28px; position: relative;">
-              <canvas id="valveChart"></canvas>
+            <div style="height: 320px; margin-bottom: 24px;">
+              <canvas id="chart"></canvas>
             </div>
-            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #8b9bba; margin-bottom: 12px;">Detalle de Parámetros</div>
+            <div style="font-size: 11px; font-weight: 700; color: #8b9bba; margin-bottom: 12px;">📊 PARÁMETROS</div>
             <div id="param-cards"></div>
           </div>
         </div>
       </div>
     </section>
   </div>
-
-  <footer>
-    <div class="footer-inner">
-      <div><strong>Proyecto de Tesis de Maestría</strong> Dashboard de diagnóstico de válvulas con Machine Learning XGBoost</div>
-      <div class="footer-right">Variables: Fricción, Carga en Asiento/Torque, Banda Muerta, Linealidad Dinámica</div>
-    </div>
-  </footer>
 </main>
 
+<footer>
+  <div class="footer-inner">
+    <div><strong>TFM Maestría</strong> Diagnóstico de válvulas con XGBoost</div>
+    <div>Fricción | Carga | Banda Muerta | Linealidad</div>
+  </div>
+</footer>
+
 <script>
-// ============================================================================
-// DASHBOARD - VERSIÓN CORREGIDA CON CÁLCULO DE SEVERIDAD
-// ============================================================================
-
 const API_URL = "http://localhost:5000/api";
-
 let valvesData = [];
-let selectedValveId = null;
-let chartInstance = null;
+let selectedId = null;
+let chart = null;
 
-// ============================================================================
-// FUNCIONES DE CÁLCULO DE SEVERIDAD
-// ============================================================================
-
-function calcularSeveridadFriccion(medido, recomendado) {
+function getSeverity(medido, recomendado, tipo) {
     const diff = Math.abs(medido - recomendado);
-    if (diff > 10) return "severo";
-    if (diff > 5) return "moderado";
+    if (tipo === 'friccion') {
+        if (diff > 10) return "severo";
+        if (diff > 5) return "moderado";
+        return "normal";
+    }
+    if (tipo === 'carga') {
+        if (recomendado === 0) return "normal";
+        const pct = Math.abs((medido / recomendado - 1) * 100);
+        if (pct > 25) return "severo";
+        if (pct > 10) return "moderado";
+        return "normal";
+    }
+    if (tipo === 'banda') {
+        if (recomendado === 0) return "normal";
+        const pct = (medido / recomendado) * 100;
+        if (pct > 120) return "severo";
+        if (pct > 100) return "moderado";
+        return "normal";
+    }
+    if (tipo === 'linealidad') {
+        if (recomendado === 0) return "normal";
+        const pct = (medido / recomendado) * 100;
+        if (pct > 130) return "severo";
+        if (pct > 100) return "moderado";
+        return "normal";
+    }
     return "normal";
 }
 
-function calcularSeveridadCarga(medido, recomendado) {
-    if (recomendado === 0) return "normal";
-    const porcentaje = Math.abs((medido / recomendado - 1) * 100);
-    if (porcentaje > 25) return "severo";
-    if (porcentaje > 10) return "moderado";
-    return "normal";
-}
+const diagnosisMap = {
+    'Fricción': { severo: '⚠️ Desgaste de packing crítico', moderado: '📌 Monitorear lubricación', normal: '✅ Normal' },
+    'Carga en Asiento/Torque': { severo: '⚠️ Riesgo de fuga interna', moderado: '📌 Verificar tendencia', normal: '✅ Normal' },
+    'Banda Muerta': { severo: '⚠️ Revisar posicionador urgente', moderado: '📌 Calibración necesaria', normal: '✅ Normal' },
+    'Linealidad Dinámica': { severo: '⚠️ Problemas graves de control', moderado: '📌 Verificar caracterización', normal: '✅ Normal' }
+};
 
-function calcularSeveridadBanda(medido, recomendado) {
-    if (recomendado === 0) return "normal";
-    const porcentaje = (medido / recomendado) * 100;
-    if (porcentaje > 120) return "severo";
-    if (porcentaje > 100) return "moderado";
-    return "normal";
-}
-
-function calcularSeveridadLinealidad(medido, recomendado) {
-    if (recomendado === 0) return "normal";
-    const porcentaje = (medido / recomendado) * 100;
-    if (porcentaje > 130) return "severo";
-    if (porcentaje > 100) return "moderado";
-    return "normal";
-}
-
-// ============================================================================
-// FUNCIONES API
-// ============================================================================
-
-async function cargarValvulas() {
+async function loadValves() {
+    const container = document.getElementById('valve-list');
+    container.innerHTML = '<div class="loading">Cargando válvulas...</div>';
     try {
-        const response = await fetch(`${API_URL}/valvulas`);
-        if (!response.ok) throw new Error('Error en API');
-        valvesData = await response.json();
-        console.log(`✅ ${valvesData.length} válvulas cargadas`);
-        
-        actualizarHeader();
-        actualizarLista();
-        
-        return valvesData;
+        const res = await fetch(`${API_URL}/valvulas`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        valvesData = await res.json();
+        console.log(`✅ ${valvesData.length} válvulas`);
+        if (valvesData.length === 0) {
+            container.innerHTML = '<div class="error-message">⚠️ No hay válvulas</div>';
+        } else {
+            updateHeader();
+            renderValveList();
+        }
     } catch (error) {
-        console.error("Error:", error);
-        document.getElementById('valve-items').innerHTML = '<div style="padding: 20px; text-align: center; color: #ff6b35;">❌ Error conectando con la API. Asegúrate que el backend esté corriendo.</div>';
-        return [];
+        container.innerHTML = `<div class="error-message">❌ Error: ${error.message}<br>Verifica backend en ${API_URL}</div>`;
     }
 }
 
-async function cargarResumen() {
+async function loadSummary() {
     try {
-        const response = await fetch(`${API_URL}/resumen`);
-        if (!response.ok) throw new Error('Error en API');
-        return await response.json();
-    } catch (error) {
-        console.error("Error cargando resumen:", error);
-        return null;
-    }
+        const res = await fetch(`${API_URL}/resumen`);
+        return res.ok ? await res.json() : null;
+    } catch { return null; }
 }
 
-async function cargarDetalle(id) {
+async function loadDetail(id) {
     try {
-        const response = await fetch(`${API_URL}/valvulas/${id}`);
-        if (!response.ok) throw new Error('Error en API');
-        return await response.json();
-    } catch (error) {
-        console.error("Error cargando detalle:", error);
-        return null;
-    }
+        const res = await fetch(`${API_URL}/valvulas/${id}`);
+        return res.ok ? await res.json() : null;
+    } catch { return null; }
 }
 
-// ============================================================================
-// FUNCIONES DE ACTUALIZACIÓN
-// ============================================================================
-
-async function actualizarHeader() {
-    const resumen = await cargarResumen();
-    if (resumen) {
+async function updateHeader() {
+    const summary = await loadSummary();
+    if (summary) {
         document.getElementById('header-stats').innerHTML = `
-            <div class="stat-badge severo"><span class="dot"></span>${resumen.alerta || 0} ALERTA</div>
-            <div class="stat-badge moderado"><span class="dot"></span>${resumen.aceptable_com || 0} ACEPTABLE CON COMENTARIOS</div>
-            <div class="stat-badge normal"><span class="dot"></span>${resumen.aceptable || 0} ACEPTABLE</div>
-            <div class="total-count"><strong>${resumen.total || 0}</strong> válvulas</div>
+            <div class="stat-badge severo"><span class="dot"></span>${summary.alerta || 0} ALERTA</div>
+            <div class="stat-badge moderado"><span class="dot"></span>${summary.aceptable_com || 0} ACEPTABLE COM</div>
+            <div class="stat-badge normal"><span class="dot"></span>${summary.aceptable || 0} ACEPTABLE</div>
+            <div class="total-count"><strong>${summary.total || 0}</strong> válvulas</div>
         `;
     }
 }
 
-function actualizarLista() {
+function renderValveList() {
     if (!valvesData.length) return;
-    
-    const severos = valvesData.filter(v => v.status === "ALERTA").length;
-    const moderados = valvesData.filter(v => v.status === "ACEPTABLE CON COMENTARIOS").length;
-    const normales = valvesData.filter(v => v.status === "ACEPTABLE").length;
-    
-    document.getElementById('valve-count-sub').textContent = `${valvesData.length} válvulas diagnosticadas por ML`;
-    document.getElementById('list-badges').innerHTML = `
-        <span class="badge severo">${severos} ALERTA</span>
-        <span class="badge moderado">${moderados} ACEPTABLE COM</span>
-        <span class="badge normal">${normales} ACEPTABLE</span>
-    `;
-    
-    const container = document.getElementById('valve-items');
+    document.getElementById('valve-count').textContent = `${valvesData.length} válvulas diagnosticadas`;
+    const container = document.getElementById('valve-list');
     container.innerHTML = valvesData.map(v => {
-        let claseSeveridad = "normal", textoSeveridad = "Normal";
-        if (v.status === "ALERTA") { claseSeveridad = "severo"; textoSeveridad = "ALERTA"; }
-        else if (v.status === "ACEPTABLE CON COMENTARIOS") { claseSeveridad = "moderado"; textoSeveridad = "ACEPTABLE CON COMENTARIOS"; }
+        let statusClass = "normal", statusText = "Normal";
+        if (v.status === "ALERTA") { statusClass = "severo"; statusText = "ALERTA"; }
+        else if (v.status === "ACEPTABLE CON COMENTARIOS") { statusClass = "moderado"; statusText = "ACEPTABLE COM"; }
         
-        // Calcular niveles para los dots usando los datos de measurements si están disponibles
-        const measurements = v.measurements || {};
-        const nivelFriccion = calcularSeveridadFriccion(measurements.friccion?.measured || 0, measurements.friccion?.recommended || 0);
-        const nivelCarga = calcularSeveridadCarga(measurements.carga?.measured || 0, measurements.carga?.recommended || 0);
-        const nivelBanda = calcularSeveridadBanda(measurements.banda?.measured || 0, measurements.banda?.recommended || 0);
-        const nivelLinealidad = calcularSeveridadLinealidad(measurements.linealidad?.measured || 0, measurements.linealidad?.recommended || 0);
+        let measurements = v.measurements || {};
+        let f = { measured: 0 }, c = { measured: 0 }, b = { measured: 0 }, l = { measured: 0 };
+        if (Array.isArray(measurements)) {
+            measurements.forEach(m => {
+                if (m.name === 'Fricción') f = m;
+                else if (m.name === 'Carga en Asiento/Torque') c = m;
+                else if (m.name === 'Banda Muerta') b = m;
+                else if (m.name === 'Linealidad Dinámica') l = m;
+            });
+        }
         
         return `
-            <button class="valve-item ${selectedValveId === v.id ? 'selected' : ''}" onclick="seleccionarValvula(${v.id})">
+            <button class="valve-item ${selectedId === v.id ? 'selected' : ''}" data-id="${v.id}">
                 <div class="valve-item-top">
-                    <div><div class="valve-name">${v.name}</div><div class="valve-status">${v.status}</div></div>
-                    <span class="badge ${claseSeveridad}">${textoSeveridad}</span>
+                    <div class="valve-name">${v.name}</div>
+                    <span class="badge ${statusClass}">${statusText}</span>
                 </div>
-                <div class="valve-dots">
-                    <div class="valve-dot-item"><span class="dot-indicator ${nivelFriccion}"></span><span class="dot-label">Fri</span></div>
-                    <div class="valve-dot-item"><span class="dot-indicator ${nivelCarga}"></span><span class="dot-label">Car</span></div>
-                    <div class="valve-dot-item"><span class="dot-indicator ${nivelBanda}"></span><span class="dot-label">Ban</span></div>
-                    <div class="valve-dot-item"><span class="dot-indicator ${nivelLinealidad}"></span><span class="dot-label">Lin</span></div>
+                <div class="valve-measurements">
+                    <span class="valve-measurement">Fri: ${(f.measured || 0).toFixed(1)}</span>
+                    <span class="valve-measurement">Car: ${(c.measured || 0).toFixed(1)}</span>
+                    <span class="valve-measurement">Ban: ${(b.measured || 0).toFixed(1)}</span>
+                    <span class="valve-measurement">Lin: ${(l.measured || 0).toFixed(1)}</span>
                 </div>
             </button>
         `;
     }).join('');
+    
+    document.querySelectorAll('.valve-item').forEach(btn => {
+        btn.addEventListener('click', () => selectValve(parseInt(btn.dataset.id)));
+    });
 }
 
-async function seleccionarValvula(id) {
-    selectedValveId = id;
-    actualizarLista();
-    
-    const detalle = await cargarDetalle(id);
-    if (!detalle) return;
-    
-    console.log("Detalle recibido:", detalle);
+async function selectValve(id) {
+    selectedId = id;
+    renderValveList();
+    const detail = await loadDetail(id);
+    if (!detail) return;
     
     document.getElementById('empty-state').style.display = 'none';
-    document.getElementById('valve-detail').style.display = 'block';
+    document.getElementById('detail-view').style.display = 'block';
     
-    let claseSeveridad = "normal", textoSeveridad = "Normal";
-    if (detalle.status === "ALERTA") { claseSeveridad = "severo"; textoSeveridad = "ALERTA"; }
-    else if (detalle.status === "ACEPTABLE CON COMENTARIOS") { claseSeveridad = "moderado"; textoSeveridad = "ACEPTABLE CON COMENTARIOS"; }
+    let statusClass = "normal", statusText = "Normal";
+    if (detail.status === "ALERTA") { statusClass = "severo"; statusText = "ALERTA"; }
+    else if (detail.status === "ACEPTABLE CON COMENTARIOS") { statusClass = "moderado"; statusText = "ACEPTABLE COM"; }
     
-    document.getElementById('detail-name').textContent = `Válvula ${detalle.name}`;
-    document.getElementById('detail-status').textContent = detalle.status;
-    document.getElementById('detail-severity-badge').innerHTML = `<span class="badge ${claseSeveridad}">${textoSeveridad}</span>`;
-    document.getElementById('detail-recommendation').textContent = detalle.recommendation || "Sin recomendación específica";
+    document.getElementById('detail-name').textContent = `Válvula ${detail.name}`;
+    document.getElementById('detail-status').textContent = detail.status;
+    document.getElementById('detail-badge').innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
+    document.getElementById('detail-recommendation').textContent = detail.recommendation || "Sin recomendación";
     
-    let planAccion = '';
-    if (detalle.actionPlan) {
-        if (typeof detalle.actionPlan === 'object') planAccion = Object.values(detalle.actionPlan).filter(v => v).join(' | ');
-        else planAccion = detalle.actionPlan;
+    let action = '';
+    if (detail.actionPlan && typeof detail.actionPlan === 'object') {
+        action = Object.values(detail.actionPlan).filter(v => v && !v.includes('✅')).join(' | ');
     }
-    document.getElementById('detail-action').textContent = planAccion || "Monitoreo programado";
+    document.getElementById('detail-action').textContent = action || "Monitoreo programado";
     
-    // Renderizar gráfico
-    const measurements = detalle.measurements || [];
+    renderChart(detail);
+    renderParamCards(detail);
+}
+
+function renderChart(detail) {
+    if (chart) chart.destroy();
+    let measurements = detail.measurements || [];
     const labels = ['Fricción', 'Carga', 'Banda Muerta', 'Linealidad'];
     const measured = [0, 0, 0, 0];
     const recommended = [0, 0, 0, 0];
-    
-    measurements.forEach(m => {
-        if (m.name === 'Fricción') { measured[0] = m.measured; recommended[0] = m.recommended; }
-        else if (m.name === 'Carga en Asiento/Torque') { measured[1] = m.measured; recommended[1] = m.recommended; }
-        else if (m.name === 'Banda Muerta') { measured[2] = m.measured; recommended[2] = m.recommended; }
-        else if (m.name === 'Linealidad Dinámica') { measured[3] = m.measured; recommended[3] = m.recommended; }
-    });
-    
-    if (chartInstance) chartInstance.destroy();
-    const ctx = document.getElementById('valveChart').getContext('2d');
-    chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [
-            { label: 'Valor Medido', data: measured, backgroundColor: 'rgba(6,182,212,0.75)', borderRadius: 4 },
-            { label: 'Valor Recomendado', data: recommended, backgroundColor: 'rgba(34,197,94,0.75)', borderRadius: 4 }
+    if (Array.isArray(measurements)) {
+        measurements.forEach(m => {
+            if (m.name === 'Fricción') { measured[0] = m.measured || 0; recommended[0] = m.recommended || 0; }
+            else if (m.name === 'Carga en Asiento/Torque') { measured[1] = m.measured || 0; recommended[1] = m.recommended || 0; }
+            else if (m.name === 'Banda Muerta') { measured[2] = m.measured || 0; recommended[2] = m.recommended || 0; }
+            else if (m.name === 'Linealidad Dinámica') { measured[3] = m.measured || 0; recommended[3] = m.recommended || 0; }
+        });
+    }
+    chart = new Chart(document.getElementById('chart'), {
+        type: 'bar', data: { labels, datasets: [
+            { label: 'Medido', data: measured, backgroundColor: '#22d3ee', borderRadius: 4 },
+            { label: 'Recomendado', data: recommended, backgroundColor: '#4ade80', borderRadius: 4 }
         ]},
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: '#f1f5f9' } } },
-            scales: { y: { title: { display: true, text: 'Unidades', color: '#f1f5f9' }, ticks: { color: '#f1f5f9' } },
-                      x: { ticks: { color: '#f1f5f9' } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f1f5f9' } } },
+            scales: { y: { ticks: { color: '#f1f5f9' }, grid: { color: '#2a3145' } }, x: { ticks: { color: '#f1f5f9' }, grid: { color: '#2a3145' } } }
         }
     });
-    
-    // Renderizar tarjetas de parámetros con severidad CALCULADA
-    const severidadMap = { 'normal': 'Normal', 'moderado': 'Moderado', 'severo': 'Severo' };
-    const diagnosisMap = {
-        'Fricción': { severo: 'Severa. Posible desgaste de packing.', moderado: 'Moderada. Requiere monitoreo.', normal: 'Normal.' },
-        'Carga en Asiento/Torque': { severo: 'Severa. Riesgo de falla.', moderado: 'Moderada. Considerar ajuste.', normal: 'Normal.' },
-        'Banda Muerta': { severo: 'Severa. Problemas graves en posicionador.', moderado: 'Moderada. Calibración.', normal: 'Normal.' },
-        'Linealidad Dinámica': { severo: 'Severa. Problemas de control graves.', moderado: 'Moderada. Verificar caracterización.', normal: 'Normal.' }
-    };
-    
-    const paramCards = measurements.map(m => {
-        // Calcular severidad REAL basada en los valores
-        let severidad = m.severity || 'normal';
-        if (m.name === 'Fricción') severidad = calcularSeveridadFriccion(m.measured, m.recommended);
-        else if (m.name === 'Carga en Asiento/Torque') severidad = calcularSeveridadCarga(m.measured, m.recommended);
-        else if (m.name === 'Banda Muerta') severidad = calcularSeveridadBanda(m.measured, m.recommended);
-        else if (m.name === 'Linealidad Dinámica') severidad = calcularSeveridadLinealidad(m.measured, m.recommended);
-        
-        const diag = diagnosisMap[m.name]?.[severidad] || 'Sin diagnóstico';
+}
+
+function renderParamCards(detail) {
+    let measurements = detail.measurements || [];
+    let params = Array.isArray(measurements) ? measurements : [];
+    const cards = params.map(m => {
+        let severity = "normal";
+        if (m.name === 'Fricción') severity = getSeverity(m.measured, m.recommended, 'friccion');
+        else if (m.name === 'Carga en Asiento/Torque') severity = getSeverity(m.measured, m.recommended, 'carga');
+        else if (m.name === 'Banda Muerta') severity = getSeverity(m.measured, m.recommended, 'banda');
+        else if (m.name === 'Linealidad Dinámica') severity = getSeverity(m.measured, m.recommended, 'linealidad');
+        const severityText = { severo: 'Severo', moderado: 'Moderado', normal: 'Normal' }[severity];
         return `
-            <div class="param-card ${severidad}">
-                <div class="param-top"><span class="param-name">${m.name}</span><span class="badge outline-${severidad}">${severidadMap[severidad]}</span></div>
-                <div class="param-diag">${diag}</div>
+            <div class="param-card ${severity}">
+                <div class="param-top"><span class="param-name">${m.name}</span><span class="badge outline-${severity}">${severityText}</span></div>
+                <div class="param-diag">${diagnosisMap[m.name]?.[severity] || 'Sin diagnóstico'}</div>
                 <div class="param-values">
-                    <div class="param-value-box"><span class="param-value-label">Medido</span><span class="param-value-num value-measured">${m.measured}<span class="param-value-unit">${m.unit || ''}</span></span></div>
-                    <div class="param-value-box"><span class="param-value-label">Recomendado</span><span class="param-value-num value-recommended">${m.recommended}<span class="param-value-unit">${m.unit || ''}</span></span></div>
-                    <div class="param-value-box"><span class="param-value-label">Desviación</span><span class="param-value-num value-deviation-${severidad}">${Math.abs(m.measured - m.recommended).toFixed(2)}<span class="param-value-unit">${m.unit || ''}</span></span></div>
+                    <div class="param-value-box"><span class="param-value-label">Medido</span><span class="param-value-num value-measured">${(m.measured || 0).toFixed(2)}<span class="param-value-unit">${m.unit || 'unid'}</span></span></div>
+                    <div class="param-value-box"><span class="param-value-label">Recomendado</span><span class="param-value-num value-recommended">${(m.recommended || 0).toFixed(2)}<span class="param-value-unit">${m.unit || 'unid'}</span></span></div>
+                    <div class="param-value-box"><span class="param-value-label">Desviación</span><span class="param-value-num value-deviation-${severity}">${Math.abs((m.measured || 0) - (m.recommended || 0)).toFixed(2)}<span class="param-value-unit">${m.unit || 'unid'}</span></span></div>
                 </div>
             </div>
         `;
     }).join('');
-    
-    document.getElementById('param-cards').innerHTML = paramCards;
+    document.getElementById('param-cards').innerHTML = cards;
 }
 
-// Inicializar
-cargarValvulas();
+loadValves();
 </script>
 </body>
 </html>
